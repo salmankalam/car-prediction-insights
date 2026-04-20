@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
 } from "recharts";
-import { TrendingUp, TrendingDown, Sparkles, Gauge, Car as CarIcon } from "lucide-react";
+import { Sparkles, Gauge, Car as CarIcon } from "lucide-react";
 import type { CarInput, PredictionResult } from "@/services/predictionService";
 import { AnimatedNumber } from "./AnimatedNumber";
+import { PriceRangeExplorer } from "./PriceRangeExplorer";
 
 export const PredictionResults = ({ result, input }: { result: PredictionResult; input: CarInput }) => {
   const importanceData = [...result.featureContributions]
