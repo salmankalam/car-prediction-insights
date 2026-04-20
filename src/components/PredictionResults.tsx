@@ -102,7 +102,7 @@ export const PredictionResults = ({ result, input }: { result: PredictionResult;
               <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" width={92} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                cursor={{ fill: "hsl(var(--foreground) / 0.08)", stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "4 4" }}
                 contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: number) => [`${v >= 0 ? "+" : ""}$${v.toLocaleString()}`, "Contribution"]}
               />
