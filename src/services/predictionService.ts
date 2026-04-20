@@ -326,6 +326,141 @@ export async function findCarForBudget(budget: number): Promise<BudgetMatch> {
   };
 }
 
+/* ───────────────────── price-range explorer ───────────────────── */
+
+const SAMPLE_MODELS: Array<{ brand: string; model: string; baseHp: number; doors: number; fuel: FuelType; trans: Transmission }> = [
+  { brand: "Toyota", model: "Camry", baseHp: 203, doors: 4, fuel: "Petrol", trans: "Automatic" },
+  { brand: "Honda", model: "Accord", baseHp: 192, doors: 4, fuel: "Hybrid", trans: "CVT" },
+  { brand: "Mazda", model: "CX-5", baseHp: 187, doors: 5, fuel: "Petrol", trans: "Automatic" },
+  { brand: "Volkswagen", model: "Golf GTI", baseHp: 241, doors: 5, fuel: "Petrol", trans: "DCT" },
+  { brand: "BMW", model: "3 Series", baseHp: 255, doors: 4, fuel: "Petrol", trans: "Automatic" },
+  { brand: "Audi", model: "A4", baseHp: 261, doors: 4, fuel: "Petrol", trans: "Automatic" },
+  { brand: "Mercedes-Benz", model: "C-Class", baseHp: 255, doors: 4, fuel: "Petrol", trans: "Automatic" },
+  { brand: "Tesla", model: "Model 3", baseHp: 283, doors: 4, fuel: "Electric", trans: "Automatic" },
+  { brand: "Lexus", model: "ES", baseHp: 215, doors: 4, fuel: "Hybrid", trans: "CVT" },
+  { brand: "Hyundai", model: "Sonata", baseHp: 191, doors: 4, fuel: "Petrol", trans: "Automatic" },
+  { brand: "Kia", model: "K5 GT", baseHp: 290, doors: 4, fuel: "Petrol", trans: "DCT" },
+  { brand: "Subaru", model: "WRX", baseHp: 271, doors: 4, fuel: "Petrol", trans: "Manual" },
+  { brand: "Volvo", model: "S60", baseHp: 247, doors: 4, fuel: "Hybrid", trans: "Automatic" },
+  { brand: "Ford", model: "Mustang", baseHp: 310, doors: 2, fuel: "Petrol", trans: "Automatic" },
+  { brand: "Nissan", model: "Altima", baseHp: 188, doors: 4, fuel: "Petrol", trans: "CVT" },
+  { brand: "Porsche", model: "718 Cayman", baseHp: 300, doors: 2, fuel: "Petrol", trans: "DCT" },
+];
+
+const COLORS = ["Black", "White", "Silver", "Gray", "Blue", "Red"];
+
+function seededRand(seed: number) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function buildCandidate(idx: number, targetPrice: number, rng: () => number): PriceRangeCar {
+  const m = SAMPLE_MODELS[idx % SAMPLE_MODELS.length];
+  const currentYear = new Date().getFullYear();
+
+  // Search a year/mileage/condition combo that lands close to targetPrice
+  let best: { input: CarInput; price: number; diff: number } | null = null;
+  for (let attempt = 0; attempt < 14; attempt++) {
+    const year = currentYear - Math.floor(rng() * 14);
+    const mileageKm = Math.round(5000 + rng() * 200000);
+    const conditionScore = 5 + Math.floor(rng() * 6);
+    const hpJitter = Math.round((rng() - 0.5) * 30);
+    const input: CarInput = {
+      brand: m.brand,
+      model: m.model,
+      year,
+      mileageKm,
+      horsepower: Math.max(70, m.baseHp + hpJitter),
+      doors: m.doors,
+      conditionScore,
+      fuelType: m.fuel,
+      transmission: m.trans,
+      country: "USA",
+      city: "—",
+      color: COLORS[Math.floor(rng() * COLORS.length)],
+    };
+    const price = runModel(preprocess(input));
+    const diff = Math.abs(price - targetPrice);
+    if (!best || diff < best.diff) best = { input, price, diff };
+  }
+
+  const c = best!.input;
+  const age = currentYear - c.year;
+  const featureScore = Math.min(
+    1,
+    (c.conditionScore / 10) * 0.35 +
+      (c.horsepower / 350) * 0.25 +
+      Math.max(0, 1 - age / 12) * 0.25 +
+      Math.max(0, 1 - c.mileageKm / 220000) * 0.15,
+  );
+
+  const highlights: string[] = [];
+  if (c.conditionScore >= 8) highlights.push(`Excellent condition (${c.conditionScore}/10)`);
+  if (c.horsepower >= 250) highlights.push(`Strong ${c.horsepower} HP engine`);
+  if (age <= 3) highlights.push(`Recent ${c.year} model`);
+  if (c.mileageKm <= 60000) highlights.push(`Low mileage (${c.mileageKm.toLocaleString()} km)`);
+  if (c.fuelType === "Electric" || c.fuelType === "Hybrid") highlights.push(`${c.fuelType} powertrain`);
+  if (c.transmission === "DCT" || c.transmission === "Automatic") highlights.push(`${c.transmission} transmission`);
+  while (highlights.length < 3) highlights.push(`${c.fuelType} · ${c.transmission}`);
+
+  return {
+    id: `pr-${idx}-${Math.round(best!.price)}`,
+    brand: c.brand,
+    model: c.model,
+    year: c.year,
+    mileageKm: c.mileageKm,
+    horsepower: c.horsepower,
+    doors: c.doors,
+    conditionScore: c.conditionScore,
+    fuelType: c.fuelType,
+    transmission: c.transmission,
+    color: c.color,
+    price: best!.price,
+    highlights: highlights.slice(0, 3),
+    featureScore,
+  };
+}
+
+export async function findCarsInPriceRange(
+  predictedPrice: number,
+  delta: number,
+): Promise<PriceRangeMatches> {
+  await delay(450 + Math.random() * 350);
+
+  const rng = seededRand(Math.round(predictedPrice + delta));
+  const low = Math.max(500, predictedPrice - delta);
+  const high = predictedPrice + delta;
+
+  const inRangePool: PriceRangeCar[] = [];
+  const belowPool: PriceRangeCar[] = [];
+
+  // Generate candidates targeted at both buckets
+  for (let i = 0; i < 18; i++) {
+    const target = low + rng() * (high - low);
+    const cand = buildCandidate(i, target, rng);
+    if (cand.price >= low && cand.price <= high) inRangePool.push(cand);
+  }
+  for (let i = 0; i < 18; i++) {
+    const target = Math.max(500, low * (0.45 + rng() * 0.5));
+    const cand = buildCandidate(i + 100, target, rng);
+    if (cand.price < low) belowPool.push(cand);
+  }
+
+  const pickTop = (pool: PriceRangeCar[]) =>
+    [...pool].sort((a, b) => b.featureScore - a.featureScore).slice(0, 3);
+
+  return {
+    predictedPrice,
+    delta,
+    inRange: pickTop(inRangePool),
+    belowRange: pickTop(belowPool),
+  };
+}
+
 /* ───────────────────── option lists for the UI ───────────────────── */
 
 export const BRAND_OPTIONS = Object.keys(BRAND_VALUE);
