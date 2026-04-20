@@ -3,7 +3,6 @@
    ║  Frosted glass · soft gradients · dreamy ║
    ╚══════════════════════════════════════════╝ */
 
-@layer base {
   :root {
     --background: 250 50% 97%;
     --foreground: 250 30% 15%;
@@ -92,4 +91,3 @@
     --shadow-glow: 0 20px 80px -15px hsl(270 80% 70% / 0.5);
     --shadow-elegant: 0 8px 32px -4px hsl(0 0% 0% / 0.5);
   }
-}

@@ -3,7 +3,6 @@
    ║  Dark luxury · deep navy + electric cyan ║
    ╚══════════════════════════════════════════╝ */
 
-@layer base {
   :root {
     /* Light variant of Midnight */
     --background: 220 30% 98%;
@@ -92,4 +91,3 @@
     --shadow-glow: 0 20px 80px -15px hsl(199 95% 60% / 0.45);
     --shadow-elegant: 0 10px 40px -10px hsl(0 0% 0% / 0.5);
   }
-}

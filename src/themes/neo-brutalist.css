@@ -3,7 +3,6 @@
    ║  Bold type · stark contrast · loud       ║
    ╚══════════════════════════════════════════╝ */
 
-@layer base {
   :root {
     --background: 50 100% 95%;
     --foreground: 0 0% 0%;
@@ -88,4 +87,3 @@
     --shadow-glow: 8px 8px 0px 0px hsl(60 100% 50%);
     --shadow-elegant: 6px 6px 0px 0px hsl(50 100% 95%);
   }
-}
