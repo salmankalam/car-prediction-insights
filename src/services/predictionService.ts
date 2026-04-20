@@ -84,7 +84,35 @@ export interface BudgetMatch {
   alternatives: Array<{ brand: string; model: string; year: number; price: number }>;
 }
 
-/* ───────────────────── catalog (mock training data) ───────────────────── */
+export interface PriceRangeCar {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  mileageKm: number;
+  horsepower: number;
+  doors: number;
+  conditionScore: number;
+  fuelType: FuelType;
+  transmission: Transmission;
+  color: string;
+  price: number;
+  /** Bullet highlights of why this car stands out */
+  highlights: string[];
+  /** Composite "best features" score 0..1 (only meaningful inside its bucket) */
+  featureScore: number;
+}
+
+export interface PriceRangeMatches {
+  /** The center predicted price */
+  predictedPrice: number;
+  /** ± dollar delta around the predicted price */
+  delta: number;
+  /** Cars within [predictedPrice - delta, predictedPrice + delta], sorted by best features */
+  inRange: PriceRangeCar[];
+  /** Cars strictly cheaper than (predictedPrice - delta), sorted by best features */
+  belowRange: PriceRangeCar[];
+}
 
 const BRAND_VALUE: Record<string, number> = {
   Toyota: 1.0, Honda: 1.0, Ford: 0.9, Chevrolet: 0.85, Hyundai: 0.85, Kia: 0.85,
