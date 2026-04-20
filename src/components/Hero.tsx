@@ -24,10 +24,9 @@ export const Hero = () => {
             AI model · 92% R² on 200k listings
           </span>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.05] tracking-tight">
-            Know what your car
-            <br />
-            is <span className="text-gradient">truly worth.</span>
+          <h1 className="font-display font-bold leading-[1.05] tracking-tight text-[clamp(2.25rem,6vw,4.5rem)]">
+            <span className="block whitespace-nowrap">Know what your car</span>
+            <span className="block whitespace-nowrap">is <span className="text-gradient">truly worth.</span></span>
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
