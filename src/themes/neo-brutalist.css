@@ -1,0 +1,89 @@
+/* ╔══════════════════════════════════════════╗
+   ║  THEME · NEO BRUTALIST                   ║
+   ║  Bold type · stark contrast · loud       ║
+   ╚══════════════════════════════════════════╝ */
+
+  :root {
+    --background: 50 100% 95%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 280 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 280 100% 65%;
+
+    --secondary: 50 100% 85%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 50 50% 90%;
+    --muted-foreground: 0 0% 25%;
+
+    --accent: 60 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 100% 40%;
+    --warning: 38 100% 50%;
+
+    --border: 0 0% 0%;
+    --input: 0 0% 100%;
+    --ring: 280 100% 50%;
+
+    --radius: 0rem;
+
+    --gradient-hero: linear-gradient(135deg, hsl(50 100% 95%), hsl(60 100% 90%));
+    --gradient-accent: linear-gradient(135deg, hsl(280 100% 50%), hsl(330 100% 50%));
+    --gradient-card: hsl(0 0% 100%);
+    --shadow-glow: 8px 8px 0px 0px hsl(0 0% 0%);
+    --shadow-elegant: 6px 6px 0px 0px hsl(0 0% 0%);
+
+    --font-display: 'Inter', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 50 100% 95%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 50 100% 95%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 50 100% 95%;
+
+    --primary: 60 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --primary-glow: 60 100% 65%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 50 100% 95%;
+
+    --muted: 0 0% 16%;
+    --muted-foreground: 50 30% 75%;
+
+    --accent: 280 100% 65%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 100% 50%;
+    --warning: 38 100% 60%;
+
+    --border: 50 100% 95%;
+    --input: 0 0% 14%;
+    --ring: 60 100% 50%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 12%));
+    --gradient-accent: linear-gradient(135deg, hsl(60 100% 50%), hsl(30 100% 50%));
+    --gradient-card: hsl(0 0% 12%);
+    --shadow-glow: 8px 8px 0px 0px hsl(60 100% 50%);
+    --shadow-elegant: 6px 6px 0px 0px hsl(50 100% 95%);
+  }

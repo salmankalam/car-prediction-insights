@@ -1,0 +1,93 @@
+/* ╔══════════════════════════════════════════╗
+   ║  THEME · GLASSMORPHIC                    ║
+   ║  Frosted glass · soft gradients · dreamy ║
+   ╚══════════════════════════════════════════╝ */
+
+  :root {
+    --background: 250 50% 97%;
+    --foreground: 250 30% 15%;
+
+    --card: 250 50% 100%;
+    --card-foreground: 250 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 250 30% 15%;
+
+    --primary: 270 70% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 280 80% 75%;
+
+    --secondary: 250 40% 94%;
+    --secondary-foreground: 250 30% 15%;
+
+    --muted: 250 30% 92%;
+    --muted-foreground: 250 15% 45%;
+
+    --accent: 320 80% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 70% 45%;
+    --warning: 38 92% 55%;
+
+    --border: 250 30% 88%;
+    --input: 250 30% 90%;
+    --ring: 270 70% 60%;
+
+    --radius: 1.5rem;
+
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(270 70% 80% / 0.4), transparent 50%),
+                     radial-gradient(ellipse at bottom right, hsl(320 80% 75% / 0.4), transparent 50%),
+                     linear-gradient(180deg, hsl(250 50% 97%), hsl(280 50% 95%));
+    --gradient-accent: linear-gradient(135deg, hsl(270 70% 60%), hsl(320 80% 65%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.7), hsl(250 50% 100% / 0.4));
+    --shadow-glow: 0 20px 60px -15px hsl(270 70% 60% / 0.4);
+    --shadow-elegant: 0 8px 32px -4px hsl(270 50% 50% / 0.15);
+
+    --font-display: 'Inter', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+  }
+
+  .dark {
+    --background: 250 40% 8%;
+    --foreground: 250 30% 95%;
+
+    --card: 250 35% 12%;
+    --card-foreground: 250 30% 95%;
+
+    --popover: 250 35% 12%;
+    --popover-foreground: 250 30% 95%;
+
+    --primary: 270 80% 70%;
+    --primary-foreground: 250 40% 8%;
+    --primary-glow: 280 90% 80%;
+
+    --secondary: 250 30% 18%;
+    --secondary-foreground: 250 30% 95%;
+
+    --muted: 250 30% 16%;
+    --muted-foreground: 250 15% 70%;
+
+    --accent: 320 80% 70%;
+    --accent-foreground: 250 40% 8%;
+
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 70% 55%;
+    --warning: 38 92% 60%;
+
+    --border: 250 30% 20%;
+    --input: 250 30% 18%;
+    --ring: 270 80% 70%;
+
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(270 80% 50% / 0.3), transparent 50%),
+                     radial-gradient(ellipse at bottom right, hsl(320 80% 50% / 0.3), transparent 50%),
+                     linear-gradient(180deg, hsl(250 40% 8%), hsl(250 40% 5%));
+    --gradient-accent: linear-gradient(135deg, hsl(270 80% 70%), hsl(320 80% 70%));
+    --gradient-card: linear-gradient(135deg, hsl(250 35% 14% / 0.8), hsl(250 35% 10% / 0.5));
+    --shadow-glow: 0 20px 80px -15px hsl(270 80% 70% / 0.5);
+    --shadow-elegant: 0 8px 32px -4px hsl(0 0% 0% / 0.5);
+  }
