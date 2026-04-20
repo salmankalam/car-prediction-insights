@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
 } from "recharts";
-import { TrendingUp, TrendingDown, Sparkles, Gauge, Car as CarIcon } from "lucide-react";
+import { Sparkles, Gauge, Car as CarIcon } from "lucide-react";
 import type { CarInput, PredictionResult } from "@/services/predictionService";
 import { AnimatedNumber } from "./AnimatedNumber";
+import { PriceRangeExplorer } from "./PriceRangeExplorer";
 
 export const PredictionResults = ({ result, input }: { result: PredictionResult; input: CarInput }) => {
   const importanceData = [...result.featureContributions]
@@ -77,7 +78,7 @@ export const PredictionResults = ({ result, input }: { result: PredictionResult;
               <XAxis type="number" hide />
               <YAxis type="category" dataKey="name" width={92} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                cursor={{ fill: "hsl(var(--foreground) / 0.08)", stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "4 4" }}
                 contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: number) => [`${v}%`, "Importance"]}
               />
@@ -101,7 +102,7 @@ export const PredictionResults = ({ result, input }: { result: PredictionResult;
               <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" width={92} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                cursor={{ fill: "hsl(var(--foreground) / 0.08)", stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "4 4" }}
                 contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: number) => [`${v >= 0 ? "+" : ""}$${v.toLocaleString()}`, "Contribution"]}
               />
@@ -115,40 +116,8 @@ export const PredictionResults = ({ result, input }: { result: PredictionResult;
         </Card>
       </div>
 
-      {/* Similar cars */}
-      <div>
-        <div className="flex items-end justify-between mb-4">
-          <h3 className="font-display font-semibold text-2xl">Similar cars at similar prices</h3>
-          <span className="text-xs text-muted-foreground">3 closest matches</span>
-        </div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {result.similarCars.map((c, i) => (
-            <motion.div
-              key={c.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.1, duration: 0.5 }}
-            >
-              <Card className="p-5 bg-gradient-card backdrop-blur-xl hover:shadow-glow hover:-translate-y-1 transition-all duration-300 h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <Badge className="bg-primary/15 text-primary border-0">{(c.similarity * 100).toFixed(0)}% match</Badge>
-                  {c.price >= result.predictedPrice
-                    ? <TrendingUp className="h-4 w-4 text-success" />
-                    : <TrendingDown className="h-4 w-4 text-destructive" />}
-                </div>
-                <div className="text-sm text-muted-foreground">{c.year}</div>
-                <div className="font-display font-semibold text-lg leading-tight">{c.brand} {c.model}</div>
-                <div className="mt-2 text-2xl font-bold text-gradient">${c.price.toLocaleString()}</div>
-                <div className="mt-3 pt-3 border-t border-border space-y-1 text-xs text-muted-foreground">
-                  <div className="flex justify-between"><span>Mileage</span><span className="text-foreground">{c.mileageKm.toLocaleString()} km</span></div>
-                  <div className="flex justify-between"><span>Fuel</span><span className="text-foreground">{c.fuelType}</span></div>
-                  <div className="flex justify-between"><span>Transmission</span><span className="text-foreground">{c.transmission}</span></div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+      {/* Price-range explorer (replaces similar cars) */}
+      <PriceRangeExplorer predictedPrice={result.predictedPrice} />
     </motion.div>
   );
 };
