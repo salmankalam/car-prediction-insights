@@ -56,10 +56,29 @@ export const BudgetSection = () => {
             </div>
           </div>
 
-          <div className="max-w-xl mx-auto py-4">
+          <div className="max-w-xl mx-auto py-4 space-y-4">
             <Slider value={[budget]} min={2000} max={150000} step={500} onValueChange={(v) => setBudget(v[0])} />
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
+            <div className="flex justify-between text-[10px] text-muted-foreground uppercase tracking-wider">
               <span>$2k</span><span>$50k</span><span>$100k</span><span>$150k</span>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">Or type it</span>
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={500}
+                  max={500000}
+                  step={500}
+                  value={budget}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (!Number.isNaN(v)) setBudget(Math.max(500, Math.min(500000, v)));
+                  }}
+                  className="pl-7 text-base font-medium tabular-nums"
+                />
+              </div>
             </div>
           </div>
 
