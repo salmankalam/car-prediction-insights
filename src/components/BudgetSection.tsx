@@ -1,22 +1,29 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet, Sparkles, Fuel, Gauge, Settings } from "lucide-react";
-import { findCarForBudget, type BudgetMatch } from "@/services/predictionService";
+import { Loader2, Wallet, Sparkles, Fuel, Gauge, Settings, Shuffle } from "lucide-react";
+// 🔴 LIVE backend client — /budget-match and /dice
+import { fetchBudgetMatch, fetchDice, type BudgetMatch, type DiceResult } from "@/services/api";
 import { AnimatedNumber } from "./AnimatedNumber";
 
 export const BudgetSection = () => {
   const [budget, setBudget] = useState(25000);
   const [loading, setLoading] = useState(false);
   const [match, setMatch] = useState<BudgetMatch | null>(null);
+  const [dice, setDice] = useState<DiceResult | null>(null);
 
   const submit = async () => {
     setLoading(true);
-    const res = await findCarForBudget(budget);
+    setDice(null);
+    // 🔴 LIVE REQUEST — main budget match
+    const res = await fetchBudgetMatch(budget);
     setMatch(res);
+    // 🔴 LIVE REQUEST — DICE counterfactual suggestions
+    fetchDice(budget).then(setDice);
     setLoading(false);
   };
 
@@ -49,10 +56,29 @@ export const BudgetSection = () => {
             </div>
           </div>
 
-          <div className="max-w-xl mx-auto py-4">
+          <div className="max-w-xl mx-auto py-4 space-y-4">
             <Slider value={[budget]} min={2000} max={150000} step={500} onValueChange={(v) => setBudget(v[0])} />
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
+            <div className="flex justify-between text-[10px] text-muted-foreground uppercase tracking-wider">
               <span>$2k</span><span>$50k</span><span>$100k</span><span>$150k</span>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">Or type it</span>
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={500}
+                  max={500000}
+                  step={500}
+                  value={budget}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (!Number.isNaN(v)) setBudget(Math.max(500, Math.min(500000, v)));
+                  }}
+                  className="pl-7 text-base font-medium tabular-nums"
+                />
+              </div>
             </div>
           </div>
 
@@ -108,6 +134,45 @@ export const BudgetSection = () => {
                   </Card>
                 ))}
               </div>
+            </div>
+
+            {/* 🔴 LIVE — DICE counterfactual suggestions */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-display font-semibold text-lg flex items-center gap-2">
+                  <Shuffle className="h-4 w-4 text-accent" /> DICE counterfactuals
+                </h4>
+                <Badge variant="secondary" className="text-[10px] font-mono">POST /dice</Badge>
+              </div>
+              <AnimatePresence mode="wait">
+                {dice ? (
+                  <motion.div
+                    key="dice"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="grid sm:grid-cols-3 gap-3"
+                  >
+                    {dice.suggestions.slice(0, 3).map((s, i) => (
+                      <Card key={i} className="p-4 bg-gradient-card backdrop-blur-xl border border-accent/20 hover:-translate-y-0.5 hover:shadow-elegant transition-all">
+                        <div className="text-xs text-muted-foreground">{s.year}</div>
+                        <div className="font-semibold">{s.brand} {s.model}</div>
+                        <div className="text-lg font-bold text-gradient mt-1">${s.price.toLocaleString()}</div>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {s.changes.slice(0, 3).map((c, j) => (
+                            <span key={j} className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent-foreground">{c}</span>
+                          ))}
+                        </div>
+                      </Card>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-xl bg-background/40 border border-border">
+                    <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                    Calling DICE endpoint for counterfactual suggestions…
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}

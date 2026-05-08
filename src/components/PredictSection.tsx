@@ -10,10 +10,13 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Sparkles } from "lucide-react";
 import {
-  predictPrice, BRAND_OPTIONS, FUEL_OPTIONS, TRANSMISSION_OPTIONS,
-  COUNTRY_OPTIONS, COLOR_OPTIONS, type CarInput, type PredictionResult,
+  BRAND_OPTIONS, FUEL_OPTIONS, TRANSMISSION_OPTIONS,
+  COUNTRY_OPTIONS, COLOR_OPTIONS, type CarInput,
 } from "@/services/predictionService";
+// 🔴 LIVE backend client
+import { fetchPrediction, type PredictionResult } from "@/services/api";
 import { PredictionResults } from "./PredictionResults";
+import { LiveInference } from "./LiveInference";
 
 const defaults: CarInput = {
   brand: "BMW",
@@ -34,13 +37,16 @@ export const PredictSection = () => {
   const [input, setInput] = useState<CarInput>(defaults);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
+  const [submittedInput, setSubmittedInput] = useState<CarInput | null>(null);
 
   const update = <K extends keyof CarInput>(k: K, v: CarInput[K]) => setInput((s) => ({ ...s, [k]: v }));
 
   const submit = async () => {
     setLoading(true);
-    const res = await predictPrice(input);
+    // 🔴 LIVE REQUEST — main /predict call
+    const res = await fetchPrediction(input);
     setResult(res);
+    setSubmittedInput(input);
     setLoading(false);
     setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
@@ -157,7 +163,13 @@ export const PredictSection = () => {
           </Card>
         </motion.div>
 
-        {result && <PredictionResults result={result} input={input} />}
+        {result && submittedInput && (
+          <div className="mt-12 space-y-6">
+            <PredictionResults result={result} input={submittedInput} />
+            {/* 🔴 Live explainability stream — SHAP, FI, ALE, Permutation, LIME */}
+            <LiveInference input={submittedInput} />
+          </div>
+        )}
       </div>
     </section>
   );
