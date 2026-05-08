@@ -163,7 +163,13 @@ export const PredictSection = () => {
           </Card>
         </motion.div>
 
-        {result && <PredictionResults result={result} input={input} />}
+        {result && submittedInput && (
+          <div className="mt-12 space-y-6">
+            <PredictionResults result={result} input={submittedInput} />
+            {/* 🔴 Live explainability stream — SHAP, FI, ALE, Permutation, LIME */}
+            <LiveInference input={submittedInput} />
+          </div>
+        )}
       </div>
     </section>
   );
