@@ -135,6 +135,45 @@ export const BudgetSection = () => {
                 ))}
               </div>
             </div>
+
+            {/* 🔴 LIVE — DICE counterfactual suggestions */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-display font-semibold text-lg flex items-center gap-2">
+                  <Shuffle className="h-4 w-4 text-accent" /> DICE counterfactuals
+                </h4>
+                <Badge variant="secondary" className="text-[10px] font-mono">POST /dice</Badge>
+              </div>
+              <AnimatePresence mode="wait">
+                {dice ? (
+                  <motion.div
+                    key="dice"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="grid sm:grid-cols-3 gap-3"
+                  >
+                    {dice.suggestions.slice(0, 3).map((s, i) => (
+                      <Card key={i} className="p-4 bg-gradient-card backdrop-blur-xl border border-accent/20 hover:-translate-y-0.5 hover:shadow-elegant transition-all">
+                        <div className="text-xs text-muted-foreground">{s.year}</div>
+                        <div className="font-semibold">{s.brand} {s.model}</div>
+                        <div className="text-lg font-bold text-gradient mt-1">${s.price.toLocaleString()}</div>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {s.changes.slice(0, 3).map((c, j) => (
+                            <span key={j} className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent-foreground">{c}</span>
+                          ))}
+                        </div>
+                      </Card>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-xl bg-background/40 border border-border">
+                    <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                    Calling DICE endpoint for counterfactual suggestions…
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         )}
       </div>
