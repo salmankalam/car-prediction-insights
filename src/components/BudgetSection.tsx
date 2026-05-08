@@ -1,22 +1,29 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet, Sparkles, Fuel, Gauge, Settings } from "lucide-react";
-import { findCarForBudget, type BudgetMatch } from "@/services/predictionService";
+import { Loader2, Wallet, Sparkles, Fuel, Gauge, Settings, Shuffle } from "lucide-react";
+// 🔴 LIVE backend client — /budget-match and /dice
+import { fetchBudgetMatch, fetchDice, type BudgetMatch, type DiceResult } from "@/services/api";
 import { AnimatedNumber } from "./AnimatedNumber";
 
 export const BudgetSection = () => {
   const [budget, setBudget] = useState(25000);
   const [loading, setLoading] = useState(false);
   const [match, setMatch] = useState<BudgetMatch | null>(null);
+  const [dice, setDice] = useState<DiceResult | null>(null);
 
   const submit = async () => {
     setLoading(true);
-    const res = await findCarForBudget(budget);
+    setDice(null);
+    // 🔴 LIVE REQUEST — main budget match
+    const res = await fetchBudgetMatch(budget);
     setMatch(res);
+    // 🔴 LIVE REQUEST — DICE counterfactual suggestions
+    fetchDice(budget).then(setDice);
     setLoading(false);
   };
 
