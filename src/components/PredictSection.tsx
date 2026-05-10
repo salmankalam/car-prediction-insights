@@ -14,7 +14,9 @@ import {
   COUNTRY_OPTIONS, COLOR_OPTIONS, type CarInput,
 } from "@/services/predictionService";
 // 🔴 LIVE backend client
-import { fetchPrediction, type PredictionResult } from "@/services/api";
+import { fetchPredict, type PredictResponse } from "@/services/api";
+import { setLastCarInput } from "@/services/lastCarInput";
+import { FinalSummary } from "./FinalSummary";
 import { PredictionResults } from "./PredictionResults";
 import { LiveInference } from "./LiveInference";
 
