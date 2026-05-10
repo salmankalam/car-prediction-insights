@@ -1,194 +1,244 @@
 /**
  * ─────────────────────────────────────────────────────────────
- *  api.ts — REAL BACKEND CLIENT
+ *  api.ts — REAL BACKEND CLIENT (FastAPI on localhost)
  * ─────────────────────────────────────────────────────────────
- *  All live model endpoints are called from here. Each helper
- *  is clearly marked with a `// 🔴 LIVE REQUEST` comment so the
- *  call sites are easy to find.
+ *  Every helper hits the real backend. Each call site is marked
+ *  with `// 🔴 LIVE REQUEST` for easy grepping.
  *
- *  Configure the backend host via VITE_API_BASE_URL or change
- *  the fallback DNS below.
- *
- *  When the live backend is unreachable we transparently fall
- *  back to the in-browser mock from `predictionService.ts` so
- *  the UI keeps working in dev / preview.
+ *  Configure host via VITE_API_BASE_URL. Defaults to localhost.
  * ─────────────────────────────────────────────────────────────
  */
 
-import {
-  predictPrice as mockPredictPrice,
-  findCarForBudget as mockFindCarForBudget,
-  type CarInput,
-  type PredictionResult,
-  type BudgetMatch,
-  type FeatureContribution,
-} from "./predictionService";
+import type { CarInput, FuelType, Transmission } from "./predictionService";
 
-// 🌐 Backend DNS — change me / set VITE_API_BASE_URL in env
+// 🌐 Backend base URL — override with VITE_API_BASE_URL
 export const API_BASE =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-  "https://api.car-price-ai.live";
+  "http://localhost:8000";
 
-const DEFAULT_TIMEOUT_MS = 8000;
+const TIMEOUT_MS = 30000;
 
-async function postJSON<T>(path: string, body: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
+/** snake_case payload expected by FastAPI PredictionRequest */
+export interface BackendCarPayload {
+  brand: string;
+  model: string;
+  year: number;
+  mileage_km: number;
+  horsepower: number;
+  doors: number;
+  condition_score: number;
+  fuel_type: string;
+  transmission: string;
+  country: string;
+  city: string;
+  color: string;
+}
+
+export function toBackendPayload(input: CarInput): BackendCarPayload {
+  return {
+    brand: input.brand,
+    model: input.model,
+    year: input.year,
+    mileage_km: input.mileageKm,
+    horsepower: input.horsepower,
+    doors: input.doors,
+    condition_score: input.conditionScore,
+    fuel_type: input.fuelType,
+    transmission: input.transmission,
+    country: input.country,
+    city: input.city,
+    color: input.color,
+  };
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(`${API_BASE}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      ...init,
+      headers: { "Content-Type": "application/json", ...(init.headers || {}) },
       signal: ctrl.signal,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} on ${path}`);
     return (await res.json()) as T;
   } finally {
     clearTimeout(timer);
   }
 }
 
-/* ───────────────────── explainability shapes ───────────────────── */
+const post = <T,>(path: string, body: unknown) =>
+  request<T>(path, { method: "POST", body: JSON.stringify(body) });
+const get = <T,>(path: string) => request<T>(path, { method: "GET" });
 
-export interface ShapResult {
-  baseline: number;
-  values: Array<{ feature: string; value: number }>;
+/* ─────────────────── response shapes ─────────────────── */
+
+export interface PredictResponse {
+  price_usd: number;
+  price_range: { low: number; high: number };
+  confidence: number;
+  input: Record<string, unknown>;
+  derived: { age: number; mileage_per_year: number; is_luxury_brand: boolean };
 }
-export interface FeatureImportanceResult {
-  values: Array<{ feature: string; importance: number }>;
-}
-export interface AleResult {
+
+export interface ContributionRow {
   feature: string;
-  bins: Array<{ x: number | string; effect: number }>;
+  label: string;
+  contribution_usd: number;
+  value_log?: number;
+  direction?: string;
 }
-export interface PermutationImportanceResult {
-  values: Array<{ feature: string; deltaR2: number }>;
+
+export interface ShapResponse {
+  contributions: ContributionRow[];
+  base_value_log: number;
+  expected_price_usd: number;
+  graph: Record<string, string>;
 }
-export interface LimeResult {
+
+export interface LimeResponse {
+  contributions: ContributionRow[];
   intercept: number;
-  weights: Array<{ feature: string; weight: number }>;
+  method: string;
+  graph: Record<string, string>;
 }
 
-export interface DiceSuggestion {
-  brand: string;
-  model: string;
-  year: number;
-  price: number;
-  changes: string[]; // counterfactual changes
-}
-export interface DiceResult {
-  budget: number;
-  suggestions: DiceSuggestion[];
+export interface ImportanceRow {
+  feature: string;
+  label: string;
+  importance: number;
+  normalized_importance: number;
+  std?: number;
 }
 
-/* ───────────────────── public live calls ───────────────────── */
-
-// 🔴 LIVE REQUEST — POST /predict  (main price prediction)
-export async function fetchPrediction(input: CarInput): Promise<PredictionResult> {
-  try {
-    return await postJSON<PredictionResult>("/predict", input);
-  } catch {
-    return mockPredictPrice(input);
-  }
+export interface ImportanceResponse {
+  importances: ImportanceRow[];
+  graph: Record<string, string>;
 }
 
-// 🔴 LIVE REQUEST — POST /explain/shap
-export async function fetchShap(input: CarInput): Promise<ShapResult> {
-  try {
-    return await postJSON<ShapResult>("/explain/shap", input);
-  } catch {
-    const r = await mockPredictPrice(input);
-    return {
-      baseline: 18000,
-      values: r.featureContributions.map((c) => ({ feature: c.feature, value: c.contribution })),
-    };
-  }
+export interface ModelImportanceResponse {
+  importances: ImportanceRow[];
+  graph?: Record<string, string>;
 }
 
-// 🔴 LIVE REQUEST — POST /explain/feature-importance
-export async function fetchFeatureImportance(input: CarInput): Promise<FeatureImportanceResult> {
-  try {
-    return await postJSON<FeatureImportanceResult>("/explain/feature-importance", input);
-  } catch {
-    const r = await mockPredictPrice(input);
-    return { values: r.featureContributions.map((c) => ({ feature: c.feature, importance: c.importance })) };
-  }
+export interface PdpFeatureSeries {
+  feature: string;
+  label: string;
+  points: { feature_value: number; predicted_price_usd: number }[];
 }
 
-// 🔴 LIVE REQUEST — POST /explain/ale
-export async function fetchAle(input: CarInput): Promise<AleResult> {
-  try {
-    return await postJSON<AleResult>("/explain/ale", input);
-  } catch {
-    // Mock: ALE for mileage
-    const bins = Array.from({ length: 8 }, (_, i) => {
-      const x = i * 50000;
-      return { x, effect: Math.round(2500 - x * 0.012 + (Math.sin(i) * 400)) };
-    });
-    return { feature: "Mileage", bins };
-  }
+export interface PdpResponse {
+  features: PdpFeatureSeries[];
+  graph: Record<string, string>;
 }
 
-// 🔴 LIVE REQUEST — POST /explain/permutation-importance
-export async function fetchPermutationImportance(input: CarInput): Promise<PermutationImportanceResult> {
-  try {
-    return await postJSON<PermutationImportanceResult>("/explain/permutation-importance", input);
-  } catch {
-    const r = await mockPredictPrice(input);
-    return {
-      values: r.featureContributions.map((c) => ({
-        feature: c.feature,
-        deltaR2: +(c.importance * (0.6 + Math.random() * 0.4)).toFixed(3),
-      })),
-    };
-  }
+export interface GlobalShapRow {
+  feature: string;
+  label: string;
+  mean_abs_shap_log: number;
+  mean_abs_shap_usd: number;
+  normalized_importance: number;
 }
 
-// 🔴 LIVE REQUEST — POST /explain/lime
-export async function fetchLime(input: CarInput): Promise<LimeResult> {
-  try {
-    return await postJSON<LimeResult>("/explain/lime", input);
-  } catch {
-    const r = await mockPredictPrice(input);
-    return {
-      intercept: 18000,
-      weights: r.featureContributions
-        .map((c) => ({ feature: c.feature, weight: c.contribution * (0.85 + Math.random() * 0.3) }))
-        .sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight)),
-    };
-  }
+export interface CombinedRow {
+  feature: string;
+  label: string;
+  consensus_score: number;
+  method_scores: Record<string, number>;
 }
 
-// 🔴 LIVE REQUEST — POST /dice  (counterfactual car suggestions for a budget)
-export async function fetchDice(budget: number): Promise<DiceResult> {
-  try {
-    return await postJSON<DiceResult>("/dice", { budget });
-  } catch {
-    const m = await mockFindCarForBudget(budget);
-    return {
-      budget,
-      suggestions: [
-        {
-          brand: m.car.brand, model: m.car.model, year: m.car.year, price: m.car.estimatedPrice,
-          changes: [`+${(m.car.conditionScore)} cond`, `${m.car.fuelType}`, `${m.car.transmission}`],
-        },
-        ...m.alternatives.map((a) => ({
-          brand: a.brand, model: a.model, year: a.year, price: a.price,
-          changes: ["older year", "lower brand tier", "higher mileage"],
-        })),
-      ],
-    };
-  }
+export interface GlobalSummaryResponse {
+  summary: string;
+  global_shap_importance: GlobalShapRow[];
+  top_combined_importance: CombinedRow[];
+  graphs: Record<string, Record<string, string>>;
 }
 
-// Re-export budget match helper (still used for the rich match card)
-// 🔴 LIVE REQUEST — POST /budget-match
-export async function fetchBudgetMatch(budget: number): Promise<BudgetMatch> {
-  try {
-    return await postJSON<BudgetMatch>("/budget-match", { budget });
-  } catch {
-    return mockFindCarForBudget(budget);
-  }
+export interface XaiMetricsResponse {
+  fidelity?: number;
+  consistency?: number;
+  sparsity?: number;
+  coverage?: number;
+  robustness?: number;
+  [k: string]: unknown;
 }
 
-export type { CarInput, PredictionResult, BudgetMatch, FeatureContribution };
+export interface PriceEffectRow {
+  feature: string;
+  label: string;
+  change: string;
+  current_engineered_value: number;
+  changed_engineered_value: number;
+  current_pdp_price_usd: number;
+  changed_pdp_price_usd: number;
+  delta_usd: number;
+  pdp_points: { feature_value: number; predicted_price_usd: number }[];
+  text: string;
+}
+
+export interface PriceEffectsResponse {
+  effects: PriceEffectRow[];
+  predicted_price_usd: number;
+  summary_text: string;
+  graph: Record<string, string>;
+}
+
+export interface FeatureEngineeringResponse {
+  raw_input: Record<string, unknown>;
+  derived: Record<string, unknown>;
+  engineered_features: Record<string, number>;
+  model_features: string[];
+}
+
+export interface CounterfactualResponse {
+  counterfactuals: Array<Record<string, unknown>>;
+  graph: Record<string, string>;
+  note: string;
+}
+
+/* ─────────────────── live calls ─────────────────── */
+
+// 🔴 LIVE REQUEST — POST /api/predict
+export const fetchPredict = (input: CarInput) =>
+  post<PredictResponse>("/api/predict", toBackendPayload(input));
+
+// 🔴 LIVE REQUEST — POST /api/feature-engineering
+export const fetchFeatureEngineering = (input: CarInput) =>
+  post<FeatureEngineeringResponse>("/api/feature-engineering", toBackendPayload(input));
+
+// 🔴 LIVE REQUEST — POST /api/explain/shap (local SHAP)
+export const fetchLocalShap = (input: CarInput) =>
+  post<ShapResponse>("/api/explain/shap", toBackendPayload(input));
+
+// 🔴 LIVE REQUEST — POST /api/explain/lime
+export const fetchLime = (input: CarInput) =>
+  post<LimeResponse>("/api/explain/lime", toBackendPayload(input));
+
+// 🔴 LIVE REQUEST — POST /api/explain/price-effects
+export const fetchPriceEffects = (input: CarInput) =>
+  post<PriceEffectsResponse>("/api/explain/price-effects", toBackendPayload(input));
+
+// 🔴 LIVE REQUEST — GET /api/explain/permutation
+export const fetchPermutation = () => get<ImportanceResponse>("/api/explain/permutation");
+
+// 🔴 LIVE REQUEST — GET /api/explain/model-importance
+export const fetchModelImportance = () =>
+  get<ModelImportanceResponse>("/api/explain/model-importance");
+
+// 🔴 LIVE REQUEST — GET /api/explain/partial-dependence
+export const fetchPartialDependence = () => get<PdpResponse>("/api/explain/partial-dependence");
+
+// 🔴 LIVE REQUEST — GET /api/explain/global-summary
+export const fetchGlobalSummary = () => get<GlobalSummaryResponse>("/api/explain/global-summary");
+
+// 🔴 LIVE REQUEST — GET /api/explain/xai-metrics
+export const fetchXaiMetrics = () => get<XaiMetricsResponse>("/api/explain/xai-metrics");
+
+// 🔴 LIVE REQUEST — POST /api/counterfactual (DiCE — used by Budget Match)
+export const fetchCounterfactual = (input: CarInput, budget: number) =>
+  post<CounterfactualResponse>("/api/counterfactual", { ...toBackendPayload(input), budget });
+
+// 🔴 LIVE REQUEST — GET /api/health
+export const fetchHealth = () => get<{ status: string }>("/api/health");
+
+export type { CarInput, FuelType, Transmission };
