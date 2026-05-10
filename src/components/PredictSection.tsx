@@ -172,10 +172,12 @@ export const PredictSection = () => {
         </motion.div>
 
         {result && submittedInput && (
-          <div className="mt-12 space-y-6">
+          <div className="mt-12 space-y-10">
             <PredictionResults result={result} input={submittedInput} />
-            {/* 🔴 Live explainability stream — SHAP, FI, ALE, Permutation, LIME */}
+            {/* 🔴 Live API checklist + streaming results */}
             <LiveInference input={submittedInput} />
+            {/* Final summary built from global-shap, global-summary, price-effects */}
+            <FinalSummary input={submittedInput} />
           </div>
         )}
       </div>
