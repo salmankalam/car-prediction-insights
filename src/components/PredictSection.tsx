@@ -14,7 +14,9 @@ import {
   COUNTRY_OPTIONS, COLOR_OPTIONS, type CarInput,
 } from "@/services/predictionService";
 // 🔴 LIVE backend client
-import { fetchPrediction, type PredictionResult } from "@/services/api";
+import { fetchPredict, type PredictResponse } from "@/services/api";
+import { setLastCarInput } from "@/services/lastCarInput";
+import { FinalSummary } from "./FinalSummary";
 import { PredictionResults } from "./PredictionResults";
 import { LiveInference } from "./LiveInference";
 
@@ -36,19 +38,25 @@ const defaults: CarInput = {
 export const PredictSection = () => {
   const [input, setInput] = useState<CarInput>(defaults);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<PredictionResult | null>(null);
+  const [result, setResult] = useState<PredictResponse | null>(null);
   const [submittedInput, setSubmittedInput] = useState<CarInput | null>(null);
 
   const update = <K extends keyof CarInput>(k: K, v: CarInput[K]) => setInput((s) => ({ ...s, [k]: v }));
 
   const submit = async () => {
     setLoading(true);
-    // 🔴 LIVE REQUEST — main /predict call
-    const res = await fetchPrediction(input);
-    setResult(res);
-    setSubmittedInput(input);
-    setLoading(false);
-    setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    try {
+      // 🔴 LIVE REQUEST — POST /api/predict
+      const res = await fetchPredict(input);
+      setResult(res);
+      setSubmittedInput(input);
+      setLastCarInput(input);
+    } catch (err) {
+      console.error("Prediction failed", err);
+    } finally {
+      setLoading(false);
+      setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    }
   };
 
   return (
@@ -164,10 +172,12 @@ export const PredictSection = () => {
         </motion.div>
 
         {result && submittedInput && (
-          <div className="mt-12 space-y-6">
+          <div className="mt-12 space-y-10">
             <PredictionResults result={result} input={submittedInput} />
-            {/* 🔴 Live explainability stream — SHAP, FI, ALE, Permutation, LIME */}
+            {/* 🔴 Live API checklist + streaming results */}
             <LiveInference input={submittedInput} />
+            {/* Final summary built from global-shap, global-summary, price-effects */}
+            <FinalSummary input={submittedInput} />
           </div>
         )}
       </div>

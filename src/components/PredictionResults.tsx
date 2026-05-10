@@ -1,48 +1,46 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
-} from "recharts";
 import { Sparkles, Gauge, Car as CarIcon } from "lucide-react";
-import type { CarInput, PredictionResult } from "@/services/predictionService";
+import type { CarInput } from "@/services/predictionService";
+import type { PredictResponse } from "@/services/api";
 import { AnimatedNumber } from "./AnimatedNumber";
-import { PriceRangeExplorer } from "./PriceRangeExplorer";
 
-export const PredictionResults = ({ result, input }: { result: PredictionResult; input: CarInput }) => {
-  const importanceData = [...result.featureContributions]
-    .sort((a, b) => b.importance - a.importance)
-    .map((c) => ({ name: c.feature, value: +(c.importance * 100).toFixed(1) }));
-
-  const contribData = [...result.featureContributions]
-    .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
-    .map((c) => ({ name: c.feature, value: c.contribution }));
-
+export const PredictionResults = ({ result, input }: { result: PredictResponse; input: CarInput }) => {
   return (
     <motion.div
       id="results"
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="mt-12 space-y-6"
     >
-      {/* Headline price card */}
       <Card className="relative p-8 md:p-12 overflow-hidden bg-gradient-card backdrop-blur-xl border-2 border-primary/20 shadow-glow">
         <div className="absolute top-0 right-0 h-64 w-64 bg-primary/15 blur-3xl rounded-full" />
         <div className="absolute bottom-0 left-0 h-64 w-64 bg-accent/15 blur-3xl rounded-full" />
 
         <div className="relative grid md:grid-cols-3 gap-8 items-center">
           <div className="md:col-span-2">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Predicted value</div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Predicted value · POST /api/predict</div>
             <div className="text-6xl md:text-7xl font-display font-bold text-gradient leading-none">
-              <AnimatedNumber value={result.predictedPrice} prefix="$" />
+              <AnimatedNumber value={Math.round(result.price_usd)} prefix="$" />
             </div>
             <div className="mt-3 text-sm text-muted-foreground">
-              Range: <span className="text-foreground font-medium">${result.priceRange.low.toLocaleString()}</span> –
-              <span className="text-foreground font-medium"> ${result.priceRange.high.toLocaleString()}</span>
+              Range:{" "}
+              <span className="text-foreground font-medium">${Math.round(result.price_range.low).toLocaleString()}</span> –
+              <span className="text-foreground font-medium"> ${Math.round(result.price_range.high).toLocaleString()}</span>
               <span className="mx-2">·</span>
               Confidence: <span className="text-success font-medium">{(result.confidence * 100).toFixed(0)}%</span>
             </div>
+            {result.derived && (
+              <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
+                <span className="px-2 py-1 rounded-full bg-background/50 border border-border">age {result.derived.age}y</span>
+                <span className="px-2 py-1 rounded-full bg-background/50 border border-border">
+                  {Math.round(result.derived.mileage_per_year).toLocaleString()} km/year
+                </span>
+                {result.derived.is_luxury_brand && (
+                  <span className="px-2 py-1 rounded-full bg-primary/15 text-primary border border-primary/20">luxury brand</span>
+                )}
+              </div>
+            )}
           </div>
           <div className="space-y-3">
             <Stat icon={CarIcon} label="Vehicle" value={`${input.year} ${input.brand}`} />
@@ -51,77 +49,6 @@ export const PredictionResults = ({ result, input }: { result: PredictionResult;
           </div>
         </div>
       </Card>
-
-      {/* AI Explanation */}
-      <Card className="p-6 md:p-8 bg-gradient-card backdrop-blur-xl">
-        <div className="flex items-start gap-4">
-          <div className="h-10 w-10 rounded-xl bg-gradient-accent grid place-items-center shrink-0 shadow-glow">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">AI explanation</div>
-            <p className="text-base leading-relaxed text-foreground/90">{result.explanation}</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Two charts side by side */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="p-6 bg-gradient-card backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-display font-semibold text-lg">Feature importance</h3>
-            <Badge variant="secondary" className="text-[10px]">global model</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">How much each feature matters across all predictions.</p>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={importanceData} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <XAxis type="number" hide />
-              <YAxis type="category" dataKey="name" width={92} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-              <Tooltip
-                cursor={{ fill: "hsl(var(--primary) / 0.12)" }}
-                contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12, color: "hsl(var(--popover-foreground))" }}
-                itemStyle={{ color: "hsl(var(--popover-foreground))" }}
-                labelStyle={{ color: "hsl(var(--popover-foreground))", fontWeight: 600 }}
-                formatter={(v: number) => [`${v}%`, "Importance"]}
-              />
-              <Bar dataKey="value" radius={[0, 8, 8, 0]} animationDuration={900}>
-                {importanceData.map((_, i) => (
-                  <Cell key={i} fill={`hsl(var(--primary) / ${0.4 + (importanceData.length - i) / importanceData.length * 0.6})`} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-6 bg-gradient-card backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-display font-semibold text-lg">Price contribution</h3>
-            <Badge variant="secondary" className="text-[10px]">this car · SHAP-style</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">How each feature pushes the price up or down for your car.</p>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={contribData} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" width={92} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-              <Tooltip
-                cursor={{ fill: "hsl(var(--primary) / 0.12)" }}
-                contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12, color: "hsl(var(--popover-foreground))" }}
-                itemStyle={{ color: "hsl(var(--popover-foreground))" }}
-                labelStyle={{ color: "hsl(var(--popover-foreground))", fontWeight: 600 }}
-                formatter={(v: number) => [`${v >= 0 ? "+" : ""}$${v.toLocaleString()}`, "Contribution"]}
-              />
-              <Bar dataKey="value" radius={[0, 8, 8, 0]} animationDuration={900}>
-                {contribData.map((d, i) => (
-                  <Cell key={i} fill={d.value >= 0 ? "hsl(var(--success))" : "hsl(var(--destructive))"} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      {/* Price-range explorer (replaces similar cars) */}
-      <PriceRangeExplorer predictedPrice={result.predictedPrice} />
     </motion.div>
   );
 };

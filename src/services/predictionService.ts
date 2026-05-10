@@ -463,8 +463,12 @@ export async function findCarsInPriceRange(
 
 /* ───────────────────── option lists for the UI ───────────────────── */
 
-export const BRAND_OPTIONS = Object.keys(BRAND_VALUE);
+/* Backend-aligned option lists (FastAPI BRAND_OPTIONS / FUEL_OPTIONS / etc.) */
+export const BRAND_OPTIONS = [
+  "Audi", "BMW", "Chevrolet", "Ford", "Honda", "Hyundai", "Jeep", "Kia",
+  "Mazda", "Mercedes-Benz", "Nissan", "Subaru", "Tesla", "Toyota", "Volkswagen",
+];
 export const FUEL_OPTIONS: FuelType[] = ["Petrol", "Diesel", "Hybrid", "Electric", "LPG"];
 export const TRANSMISSION_OPTIONS: Transmission[] = ["Manual", "Automatic", "CVT", "DCT"];
-export const COUNTRY_OPTIONS = Object.keys(COUNTRY_VALUE);
+export const COUNTRY_OPTIONS = ["USA", "Germany", "UK", "France"];
 export const COLOR_OPTIONS = ["Black", "White", "Silver", "Gray", "Blue", "Red", "Green", "Yellow", "Orange", "Brown"];
