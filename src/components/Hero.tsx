@@ -21,7 +21,7 @@ export const Hero = () => {
         >
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-success animate-glow-pulse" />
-            AI model · 92% R² on 200k listings
+            AI model · 90% R² on 1M listings
           </span>
 
           <h1 className="font-display font-bold leading-[1.05] tracking-tight text-[clamp(2.25rem,6vw,4.5rem)]">

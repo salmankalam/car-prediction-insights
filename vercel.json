@@ -1,0 +1,9 @@
+{
+  "buildCommand": "bun run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "root": ".",
+  "env": [
+    "VITE_API_BASE_URL"
+  ]
+}

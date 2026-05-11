@@ -340,7 +340,8 @@ const ResultBody = ({ k, results }: { k: TaskKey; results: ResultMap }) => {
     );
   }
   if (k === "xai" && results.xai) {
-    const entries = Object.entries(results.xai).filter(([, v]) => typeof v === "number") as [string, number][];
+    const metricSource = results.xai.metrics ?? results.xai;
+    const entries = Object.entries(metricSource).filter(([, v]) => typeof v === "number") as [string, number][];
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
         {entries.map(([key, val]) => (

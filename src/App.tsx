@@ -14,7 +14,11 @@ import { ThemeProvider } from "@/theme/ThemeProvider";
  *    "@/themes/glassmorphic.css"  ← frosted, dreamy gradients
  *    "@/themes/carbon-sport.css"  ← racing red on carbon black
  * ────────────────────────────────────────────────────────────── */
-import "@/themes/midnight.css";
+// import "@/themes/midnight.css";
+// import "@/themes/porcelain.css";
+import "@/themes/neo-brutalist.css";
+// import "@/themes/glassmorphic.css";
+// import "@/themes/carbon-sport.css";
 
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";

@@ -16,7 +16,7 @@ export const API_BASE =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
   "http://localhost:8000";
 
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 180000;
 
 /** snake_case payload expected by FastAPI PredictionRequest */
 export interface BackendCarPayload {
@@ -155,6 +155,9 @@ export interface GlobalSummaryResponse {
 }
 
 export interface XaiMetricsResponse {
+  metrics?: Record<string, number>;
+  overall_score?: number;
+  graph?: Record<string, string>;
   fidelity?: number;
   consistency?: number;
   sparsity?: number;
