@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet, Sparkles, Shuffle, AlertCircle } from "lucide-react";
+import { Loader2, Wallet, Sparkles, Shuffle, AlertCircle, Gauge, MapPin, Fuel, Settings2 } from "lucide-react";
 // 🔴 LIVE backend client — DiCE counterfactual endpoint
 import { fetchCounterfactual, type CounterfactualResponse } from "@/services/api";
 import { useLastCarInput } from "@/services/lastCarInput";
@@ -162,24 +162,53 @@ export const BudgetSection = () => {
             <div className="grid md:grid-cols-3 gap-4">
               {cfRows.map((row, i) => (
                 <Card key={i} className="p-5 bg-gradient-card backdrop-blur-xl border border-accent/20 hover:-translate-y-0.5 hover:shadow-elegant transition-all">
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge className="bg-accent/15 text-accent-foreground border-0">option {i + 1}</Badge>
-                    {"estimated_price_usd" in row && (
-                      <div className="text-lg font-bold text-gradient">
-                        ${Number(row.estimated_price_usd).toLocaleString()}
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <Badge className="bg-accent/15 text-accent-foreground border-0 mb-2">option {i + 1}</Badge>
+                      <h5 className="font-display font-semibold text-lg leading-tight">
+                        {row.car_name ?? `${row.year ?? ""} ${row.brand ?? ""} ${row.model ?? ""}`.trim()}
+                      </h5>
+                      <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span>{row.city ?? "Unknown city"}, {row.country ?? "Unknown country"}</span>
+                      </div>
+                    </div>
+                    {typeof row.estimated_price_usd === "number" && (
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-gradient">
+                          ${Math.round(row.estimated_price_usd).toLocaleString()}
+                        </div>
+                        {typeof row.distance_from_budget_usd === "number" && (
+                          <div className={`text-[11px] tabular-nums ${row.distance_from_budget_usd <= 0 ? "text-success" : "text-destructive"}`}>
+                            {row.distance_from_budget_usd >= 0 ? "+" : "-"}${Math.abs(Math.round(row.distance_from_budget_usd)).toLocaleString()} vs budget
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                  <div className="space-y-1.5">
-                    {Object.entries(row).slice(0, 8).map(([key, val]) => (
-                      <div key={key} className="flex justify-between text-[11px] gap-2">
-                        <span className="text-muted-foreground truncate">{key.replace(/_/g, " ")}</span>
-                        <span className="tabular-nums font-mono text-foreground/90 truncate">
-                          {typeof val === "number" ? val.toLocaleString() : typeof val === "object" ? JSON.stringify(val) : String(val)}
-                        </span>
-                      </div>
-                    ))}
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <Metric label="Mileage" value={typeof row.mileage_km === "number" ? `${row.mileage_km.toLocaleString()} km` : "Unknown"} />
+                    <Metric label="Condition" value={typeof row.condition_score === "number" ? `${row.condition_score}/10` : "Unknown"} />
+                    <Metric label="Power" value={typeof row.horsepower === "number" ? `${row.horsepower} HP` : "Unknown"} />
+                    <Metric label="Doors" value={typeof row.doors === "number" ? String(row.doors) : "Unknown"} />
                   </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="gap-1 text-[10px]">
+                      <Fuel className="h-3 w-3" /> {row.fuel_type ?? "Fuel unknown"}
+                    </Badge>
+                    <Badge variant="secondary" className="gap-1 text-[10px]">
+                      <Settings2 className="h-3 w-3" /> {row.transmission ?? "Transmission unknown"}
+                    </Badge>
+                    <Badge variant="secondary" className="gap-1 text-[10px]">
+                      <Gauge className="h-3 w-3" /> {typeof row.match_score === "number" ? `${Math.round(row.match_score * 100)}% match` : "ranked"}
+                    </Badge>
+                  </div>
+
+                  {row.reason && (
+                    <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">{row.reason}</p>
+                  )}
                 </Card>
               ))}
             </div>
@@ -189,3 +218,10 @@ export const BudgetSection = () => {
     </section>
   );
 };
+
+const Metric = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-xl bg-background/45 border border-border px-3 py-2">
+    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="mt-0.5 font-medium tabular-nums">{value}</div>
+  </div>
+);

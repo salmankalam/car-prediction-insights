@@ -249,6 +249,17 @@ const horiz = (data: { name: string; value: number }[], colorFn: (v: number) => 
   </ResponsiveContainer>
 );
 
+const compactFeatureValue = (feature: string, value: number) => {
+  if (feature === "mileage_km") return `${Math.round(value / 1000)}k km`;
+  if (feature === "mileage_per_year") return `${Math.round(value / 1000)}k/yr`;
+  if (feature === "horsepower") return `${Math.round(value)} HP`;
+  if (feature === "condition_score") return `${value.toFixed(1)}/10`;
+  if (feature === "doors") return `${Math.round(value)}`;
+  if (feature === "age") return `${Math.round(value)} yr`;
+  if (feature === "year") return `${Math.round(value)}`;
+  return value.toLocaleString();
+};
+
 const ResultBody = ({ k, results }: { k: TaskKey; results: ResultMap }) => {
   if (k === "fe" && results.fe) {
     const d = results.fe.derived;
@@ -328,9 +339,22 @@ const ResultBody = ({ k, results }: { k: TaskKey; results: ResultMap }) => {
             <ResponsiveContainer width="100%" height={150}>
               <LineChart data={f.points} margin={{ left: 0, right: 10, top: 4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
-                <XAxis dataKey="feature_value" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="feature_value_raw"
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  tickFormatter={(v) => compactFeatureValue(f.feature, Number(v))}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} width={42} />
-                <Tooltip cursor={{ fill: "hsl(var(--primary) / 0.12)" }} contentStyle={tooltipStyle} itemStyle={tipItem} labelStyle={tipLabel} formatter={(v: number) => [`$${Math.round(v).toLocaleString()}`, "Price"]} />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--primary) / 0.12)" }}
+                  contentStyle={tooltipStyle}
+                  itemStyle={tipItem}
+                  labelStyle={tipLabel}
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.feature_value_label ?? ""}
+                  formatter={(v: number) => [`$${Math.round(v).toLocaleString()}`, "Price"]}
+                />
                 <Line type="monotone" dataKey="predicted_price_usd" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} animationDuration={700} />
               </LineChart>
             </ResponsiveContainer>
@@ -340,18 +364,39 @@ const ResultBody = ({ k, results }: { k: TaskKey; results: ResultMap }) => {
     );
   }
   if (k === "xai" && results.xai) {
-    const metricSource = results.xai.metrics ?? results.xai;
-    const entries = Object.entries(metricSource).filter(([, v]) => typeof v === "number") as [string, number][];
+    const metricRows = Array.isArray(results.xai.metrics)
+      ? results.xai.metrics
+      : Object.entries(results.xai.metrics ?? results.xai)
+          .filter(([, v]) => typeof v === "number")
+          .map(([metric, score]) => ({
+            metric,
+            score: score as number,
+            target: "",
+            interpretation: "",
+          }));
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-        {entries.map(([key, val]) => (
-          <div key={key} className="rounded-xl bg-background/40 border border-border p-3 text-center">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key}</div>
-            <div className="text-2xl font-display font-bold text-gradient mt-1">
-              {val < 1 ? (val * 100).toFixed(0) + "%" : val.toFixed(2)}
-            </div>
+      <div className="space-y-3">
+        {typeof results.xai.overall_score === "number" && (
+          <div className="rounded-xl bg-primary/10 border border-primary/20 p-3 flex items-center justify-between">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Overall XAI quality</span>
+            <span className="text-xl font-display font-bold text-gradient">
+              {(results.xai.overall_score * 100).toFixed(0)}%
+            </span>
           </div>
-        ))}
+        )}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+          {metricRows.map((row) => (
+            <div key={row.metric} className="rounded-xl bg-background/40 border border-border p-3 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{row.metric}</div>
+              <div className="text-2xl font-display font-bold text-gradient mt-1">
+                {(row.score * 100).toFixed(0)}%
+              </div>
+              {row.interpretation && (
+                <p className="mt-2 text-[10px] leading-snug text-muted-foreground">{row.interpretation}</p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

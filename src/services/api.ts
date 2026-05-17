@@ -124,7 +124,12 @@ export interface ModelImportanceResponse {
 export interface PdpFeatureSeries {
   feature: string;
   label: string;
-  points: { feature_value: number; predicted_price_usd: number }[];
+  points: {
+    feature_value: number;
+    feature_value_raw: number;
+    feature_value_label: string;
+    predicted_price_usd: number;
+  }[];
 }
 
 export interface PdpResponse {
@@ -154,8 +159,15 @@ export interface GlobalSummaryResponse {
   graphs: Record<string, Record<string, string>>;
 }
 
+export interface XaiMetricRow {
+  metric: string;
+  score: number;
+  target: string;
+  interpretation: string;
+}
+
 export interface XaiMetricsResponse {
-  metrics?: Record<string, number>;
+  metrics?: XaiMetricRow[] | Record<string, number>;
   overall_score?: number;
   graph?: Record<string, string>;
   fidelity?: number;
@@ -172,10 +184,17 @@ export interface PriceEffectRow {
   change: string;
   current_engineered_value: number;
   changed_engineered_value: number;
+  current_display_value: string;
+  changed_display_value: string;
   current_pdp_price_usd: number;
   changed_pdp_price_usd: number;
   delta_usd: number;
-  pdp_points: { feature_value: number; predicted_price_usd: number }[];
+  pdp_points: {
+    feature_value: number;
+    feature_value_raw: number;
+    feature_value_label: string;
+    predicted_price_usd: number;
+  }[];
   text: string;
 }
 
@@ -194,7 +213,26 @@ export interface FeatureEngineeringResponse {
 }
 
 export interface CounterfactualResponse {
-  counterfactuals: Array<Record<string, unknown>>;
+  counterfactuals: Array<{
+    car_name?: string;
+    brand?: string;
+    model?: string;
+    year?: number;
+    estimated_price_usd?: number;
+    distance_from_budget_usd?: number;
+    mileage_km?: number;
+    horsepower?: number;
+    doors?: number;
+    condition_score?: number;
+    fuel_type?: string;
+    transmission?: string;
+    country?: string;
+    city?: string;
+    color?: string;
+    match_score?: number;
+    reason?: string;
+    [key: string]: unknown;
+  }>;
   graph: Record<string, string>;
   note: string;
 }

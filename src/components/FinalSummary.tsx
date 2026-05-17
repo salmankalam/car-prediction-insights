@@ -23,6 +23,17 @@ const tooltipStyle = {
 const tipItem = { color: "hsl(var(--popover-foreground))" };
 const tipLabel = { color: "hsl(var(--popover-foreground))", fontWeight: 600 };
 
+const compactFeatureValue = (feature: string, value: number) => {
+  if (feature === "mileage_km") return `${Math.round(value / 1000)}k km`;
+  if (feature === "mileage_per_year") return `${Math.round(value / 1000)}k/yr`;
+  if (feature === "horsepower") return `${Math.round(value)} HP`;
+  if (feature === "condition_score") return `${value.toFixed(1)}/10`;
+  if (feature === "doors") return `${Math.round(value)}`;
+  if (feature === "age") return `${Math.round(value)} yr`;
+  if (feature === "year") return `${Math.round(value)}`;
+  return value.toLocaleString();
+};
+
 export const FinalSummary = ({ input }: { input: CarInput }) => {
   const [summary, setSummary] = useState<GlobalSummaryResponse | null>(null);
   const [effects, setEffects] = useState<PriceEffectsResponse | null>(null);
@@ -159,13 +170,28 @@ export const FinalSummary = ({ input }: { input: CarInput }) => {
                   <ResponsiveContainer width="100%" height={140}>
                     <LineChart data={e.pdp_points} margin={{ left: 0, right: 10, top: 4, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
-                      <XAxis dataKey="feature_value" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                      <XAxis
+                        dataKey="feature_value_raw"
+                        tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                        tickFormatter={(v) => compactFeatureValue(e.feature, Number(v))}
+                        axisLine={false}
+                        tickLine={false}
+                      />
                       <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} width={42} />
-                      <Tooltip cursor={{ fill: "hsl(var(--primary) / 0.12)" }} contentStyle={tooltipStyle} itemStyle={tipItem} labelStyle={tipLabel} formatter={(v: number) => [`$${Math.round(v).toLocaleString()}`, "PDP price"]} />
+                      <Tooltip
+                        cursor={{ fill: "hsl(var(--primary) / 0.12)" }}
+                        contentStyle={tooltipStyle}
+                        itemStyle={tipItem}
+                        labelStyle={tipLabel}
+                        labelFormatter={(_, payload) => payload?.[0]?.payload?.feature_value_label ?? ""}
+                        formatter={(v: number) => [`$${Math.round(v).toLocaleString()}`, "PDP price"]}
+                      />
                       <Line type="monotone" dataKey="predicted_price_usd" stroke={positive ? "hsl(var(--success))" : "hsl(var(--destructive))"} strokeWidth={2} dot={false} animationDuration={700} />
                     </LineChart>
                   </ResponsiveContainer>
-                  <p className="mt-2 text-[11px] text-muted-foreground">{e.text}</p>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    {e.current_display_value} to {e.changed_display_value}. {e.text}
+                  </p>
                 </div>
               );
             })}
