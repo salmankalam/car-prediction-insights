@@ -3,6 +3,6 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "env": {
-    "VITE_API_BASE_URL": "https://car-prediction-insights.vercel.app/api"
+    "VITE_API_BASE_URL": "https://car-prediction-backend.onrender.com"
   }
 }
