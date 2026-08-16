@@ -14,7 +14,7 @@ import type { CarInput, FuelType, Transmission } from "./predictionService";
 // 🌐 Backend base URL — override with VITE_API_BASE_URL
 export const API_BASE =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-  "http://localhost:8000";
+  "https://car-prediction-backend.onrender.com";
 
 const TIMEOUT_MS = 180000;
 
